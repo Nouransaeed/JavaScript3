@@ -32,11 +32,44 @@
 
   function main(url) {
     fetchJSON(url, (err, data) => {
-      const root = document.getElementById('root');
+      const root = document.getElementById('root', 'repoName', 'contributors');
       if (err) {
         createAndAppend('div', root, { text: err.message, class: 'alert-error' });
       } else {
-        createAndAppend('pre', root, { text: JSON.stringify(data, null, 2) });
+        const select = createAndAppend('select', root);
+        createAndAppend('option', select, { text: 'choose a Repository' });
+        data.forEach(repo => {
+          const name = repo.name;
+          createAndAppend('option', select, { text: name });
+        });
+
+        const repoInfo = createAndAppend('div', repoName);
+        const contribs = createAndAppend('div', contributors);
+        select.addEventListener('change', evt => {
+          const selectedRepo = evt.target.value;
+          const repo = data.filter(r => r.name == selectedRepo)[0];
+          console.log(repo);
+          repoInfo.innerHTML = '';
+          contribs.innerHTML = '';
+
+          const addInfo = (label, value) => {
+            const container = createAndAppend('div', repoInfo);
+            createAndAppend('span', container, { text: label });
+            createAndAppend('span', container, { text: value });
+          };
+          addInfo('Name: ', repo.name);
+          addInfo('Desciption: ', repo.description);
+          addInfo('Updated: ', repo.updated_at);
+          addInfo('forks:', repo.forks_url);
+
+          const contribsUrl = repo.contributors_url;
+          fetchJSON(contribsUrl, (err, contribData) => {
+            contribData.forEach(contributor => {
+              createAndAppend('div', contribs, { text: contributor.login });
+              createAndAppend('img', contribs, { src: contributor.avatar_url });
+            });
+          });
+        });
       }
     });
   }
